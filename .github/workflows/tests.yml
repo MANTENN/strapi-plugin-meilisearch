@@ -20,6 +20,8 @@ jobs:
         uses: actions/setup-node@v1
       - name: Install dependencies
         run: yarn --dev && yarn --cwd ./playground
+      - name: Build playground
+        run: yarn playground:build
       - name: Cypress run
         uses: cypress-io/github-action@v2
         with:
