@@ -16,7 +16,7 @@ describe('Strapi Login flow', () => {
   })
 
   it('Enter to the plugin Home Page', () => {
-    cy.contains('meilisearch', { timeout: 10000 }).click()
+    cy.contains('MeiliSearch', { timeout: 10000 }).click()
     cy.url().should('include', '/plugins/meilisearch')
   })
 
