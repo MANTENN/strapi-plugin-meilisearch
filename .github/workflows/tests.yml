@@ -22,8 +22,8 @@ jobs:
       - name: Cypress run
         uses: cypress-io/github-action@v2
         with:
-          build: yarn --dev
-          start: yarn test
+          build: yarn --dev && yarn --cwd ./playground
+          start: yarn start
   playground_build_tests:
     runs-on: ubuntu-latest
     strategy:
