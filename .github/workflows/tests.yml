@@ -16,13 +16,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
+      - name: Setup node
+        uses: actions/setup-node@v1
+      - name: Install dependencies
+        run: yarn --dev && yarn --cwd ./playground
       # Install NPM dependencies, cache them correctly
       # and run all Cypress tests
       - name: Cypress run
         uses: cypress-io/github-action@v2
-        with:
-          build: yarn --dev && yarn --cwd ./playground
           start: yarn start
   playground_build_tests:
     runs-on: ubuntu-latest
