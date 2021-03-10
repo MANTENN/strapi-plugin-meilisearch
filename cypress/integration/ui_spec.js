@@ -92,4 +92,3 @@ describe('Strapi Login flow', () => {
     cy.get('input[name="MSApiKey"]').should('have.value', apiKey)
   })
 })
-
