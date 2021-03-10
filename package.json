@@ -11,8 +11,9 @@
     "playground:build": "yarn --cwd ./playground build",
     "playground:start": "yarn --cwd ./playground start",
     "start": "yarn playground:start",
+    "start-test-server": "yarn playground:build && yarn playground:start",
     "cy:run": "cypress run",
-    "test": "start-server-and-test start http://localhost:1337 cy:run"
+    "test": "start-server-and-test start-test-server http://localhost:1337 cy:run"
   },
   "strapi": {
     "name": "meilisearch",
