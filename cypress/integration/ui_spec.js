@@ -20,8 +20,6 @@ const removeNotifications = () => {
 describe('Strapi Login flow', () => {
   before(() => {
     cy.visit(adminUrl)
-    cy.get('input[name="MSHost"]').clear().type(host)
-    cy.get('input[name="MSHost"]').clear().type(host)
   })
   it('visit the Strapi admin panel', () => {
     cy.url().should('match', /login/)
