@@ -1,12 +1,11 @@
 const {
-  adminUrl,
   user: { email, password },
-  credentials: {
-    host,
-    apiKey
-  }
+  apiKey,
+  env,
+  ...rest
 } = Cypress.env()
 
+const { host, adminUrl } = rest[env]
 const wrongHost = 'http://localhost:1234'
 const wrongApiKey = 'wrongApiKey'
 
@@ -19,8 +18,11 @@ const removeNotifications = () => {
 }
 
 describe('Strapi Login flow', () => {
-  it('visit the Strapi admin panel', () => {
+  before(() => {
     cy.visit(adminUrl)
+  })
+  it('visit the Strapi admin panel', () => {
+    cy.url().should('match', /login/)
     cy.get('form', { timeout: 10000 }).should('be.visible')
   })
 
@@ -38,11 +40,6 @@ describe('Strapi Login flow', () => {
   it('Credentials should be displayed', () => {
     cy.get('input[name="MSHost"]').should('have.value', host)
     cy.get('input[name="MSApiKey"]').should('have.value', apiKey)
-  })
-
-  it('Collections should be displayed', () => {
-    cy.contains('category', { timeout: 10000 })
-    cy.contains('restaurant', { timeout: 10000 })
   })
 
   it('Collections should be displayed', () => {
@@ -95,3 +92,4 @@ describe('Strapi Login flow', () => {
     cy.get('input[name="MSApiKey"]').should('have.value', apiKey)
   })
 })
+

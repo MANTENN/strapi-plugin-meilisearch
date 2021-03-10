@@ -13,6 +13,14 @@ jobs:
   cypress-run:
     runs-on: ubuntu-latest
     container: cypress/browsers:node12.18.3-chrome87-ff82
+    services:
+      meilisearch:
+        image: getmeili/meilisearch:latest
+        env:
+          MEILI_MASTER_KEY: 'masterKey'
+          MEILI_NO_ANALYTICS: 'true'
+        ports:
+          - '7700:7700'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -20,13 +28,11 @@ jobs:
         uses: actions/setup-node@v1
       - name: Install dependencies
         run: yarn --dev && yarn --cwd ./playground
-      - name: MeiliSearch (latest) setup with Docker
-        run: docker run -d -p 7700:7700 getmeili/meilisearch:latest ./meilisearch --no-analytics=true --master-key='masterKey'
       - name: Cypress run
         uses: cypress-io/github-action@v2
         with:
           build: yarn playground:build
-          start: yarn start
+          start: yarn playground:start
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
