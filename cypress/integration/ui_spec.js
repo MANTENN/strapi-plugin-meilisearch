@@ -1,6 +1,10 @@
 const {
   adminUrl,
-  user: { email, password }
+  user: { email, password },
+  credentials: {
+    host,
+    apiKey
+  }
 } = Cypress.env()
 
 const wrongHost = 'http://localhost:1234'

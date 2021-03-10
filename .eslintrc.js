@@ -31,6 +31,6 @@ module.exports = {
   rules: {
     'react/jsx-indent': 'error',
     'react/jsx-indent-props': [2, 2],
-    'cypress/no-unecessary-waiting': false,
+    'cypress/no-unnecessary-waiting': 'off'
   }
 }
