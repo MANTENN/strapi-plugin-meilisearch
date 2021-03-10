@@ -66,7 +66,7 @@ const Credentials = () => {
                 type="text"
                 value={msApiKey}
               />
-              <Button onClick={addMeilisearchCredentials} style={{ marginTop: '20px' }}>
+              <Button className="credentials_button" onClick={addMeilisearchCredentials} style={{ marginTop: '20px' }}>
                   Add
               </Button>
           </Wrapper>

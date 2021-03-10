@@ -95,6 +95,7 @@ const Collections = () => {
       <div className="col-md-12">
           <Wrapper>
               <Table
+                className='collections'
                 headers={headers}
                 rows={collectionsList}
                 withBulkAction
