@@ -20,6 +20,8 @@ const removeNotifications = () => {
 describe('Strapi Login flow', () => {
   before(() => {
     cy.visit(adminUrl)
+    cy.get('input[name="MSHost"]').clear().type(host)
+    cy.get('input[name="MSHost"]').clear().type(host)
   })
   it('visit the Strapi admin panel', () => {
     cy.url().should('match', /login/)
@@ -35,6 +37,13 @@ describe('Strapi Login flow', () => {
   it('Enter to the plugin Home Page', () => {
     cy.contains('MeiliSearch', { timeout: 10000 }).click()
     cy.url().should('include', '/plugins/meilisearch')
+  })
+
+  it('Add credentials', () => {
+    cy.get('input[name="MSHost"]').clear().type(host)
+    cy.get('input[name="MSApiKey"]').clear().type(apiKey)
+    cy.get('.credentials_button').click()
+    removeNotifications()
   })
 
   it('Credentials should be displayed', () => {
@@ -54,7 +63,6 @@ describe('Strapi Login flow', () => {
     const category = '.collections tbody tr:nth-child(2)'
     cy.get(`${category} input[type="checkbox"]`).click()
     cy.get(`${category}`).contains('processed')
-
     removeNotifications()
   })
 
