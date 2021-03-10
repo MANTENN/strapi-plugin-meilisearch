@@ -20,17 +20,23 @@ jobs:
         uses: actions/setup-node@v1
       - name: Install dependencies
         run: yarn --dev && yarn --cwd ./playground
-      - name: Build playground
-        run: yarn playground:build
+      - name: MeiliSearch (latest) setup with Docker
+        run: docker run -d -p 7700:7700 getmeili/meilisearch:latest ./meilisearch --no-analytics=true --master-key='masterKey'
       - name: Cypress run
         uses: cypress-io/github-action@v2
         with:
+          build: yarn playground:build
           start: yarn start
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
           name: cypress-screenshots
           path: cypress/screenshots
+      - uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: cypress-videos
+          path: cypress/videos
 
   playground_build_tests:
     runs-on: ubuntu-latest
