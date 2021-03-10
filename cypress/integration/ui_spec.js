@@ -1,6 +1,7 @@
 const {
   adminUrl,
-  user: { email, password }
+  user: { email, password },
+  credentials: { host, apiKey }
 } = Cypress.env()
 
 describe('Strapi Login flow', () => {
@@ -15,9 +16,19 @@ describe('Strapi Login flow', () => {
     cy.get('button[type="submit"]').click()
   })
 
-  it('Enter to the plugin Home Page', () => {
+  it('Enter the MeiliSearch plugin Home Page', () => {
     cy.contains('MeiliSearch', { timeout: 10000 }).click()
     cy.url().should('include', '/plugins/meilisearch')
+  })
+
+  it('Credentials should be displayed', () => {
+    cy.get('input[name="MSHost"]').type(email).should('have.value', host)
+    cy.get('input[name="MSApiKey"]').type(email).should('have.value', apiKey)
+  })
+
+  it('Collections should be displayed', () => {
+    cy.contains('category', { timeout: 10000 })
+    cy.contains('restaurant', { timeout: 10000 })
   })
 
   // @todo add [ CREATE | EDIT | DELETE ] tests
