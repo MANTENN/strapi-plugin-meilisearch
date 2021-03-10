@@ -13,8 +13,7 @@
     "cy:run": "cypress run --env env=watch",
     "test:watch": "start-server-and-test playground:dev http://localhost:8000 'cypress open --env env=watch'",
     "pretest": "yarn playground:build",
-    "test": "start-server-and-test playground:start http://localhost:1337 'cypress run --env env=test'",
-    "test:ci": "start-server-and-test playground:start http://localhost:1337 'cy:run --env env=ci'"
+    "test": "start-server-and-test playground:start http://localhost:1337 'cypress run --env env=test'"
   },
   "strapi": {
     "name": "meilisearch",
