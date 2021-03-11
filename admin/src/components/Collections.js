@@ -23,7 +23,7 @@ const headers = [
 
 const Collections = ({ updateCredentials }) => {
   const [collectionsList, setCollectionsList] = useState([])
-  const [updatedCollections, setupdatedCollections] = useState(false)
+  const [updatedCollections, setUpdatedCollections] = useState(false)
 
   const updateStatus = async ({ indexUid, updateId }) => {
     const response = await request(`/${pluginId}/indexes/${indexUid}/update/${updateId}`, {
@@ -32,7 +32,7 @@ const Collections = ({ updateCredentials }) => {
     const { error } = response
     if (error) errorNotifications(error)
     else successNotification({ message: `${indexUid} has all its documents indexed` })
-    setupdatedCollections(false)
+    setUpdatedCollections(false)
   }
 
   const addCollectionToMeiliSearch = async ({ name: indexUid }) => {
@@ -65,7 +65,7 @@ const Collections = ({ updateCredentials }) => {
   const addOrRemoveCollection = async (row) => {
     if (row._isChecked) await deleteIndex(row)
     else await addCollectionToMeiliSearch(row)
-    setupdatedCollections(false)
+    setUpdatedCollections(false)
   }
 
   const fetchCollections = async () => {
@@ -81,12 +81,12 @@ const Collections = ({ updateCredentials }) => {
         }
       ))
       setCollectionsList(colStatus)
-      setupdatedCollections(true)
+      setUpdatedCollections(true)
     }
   }
 
   useEffect(() => {
-    setupdatedCollections(false)
+    setUpdatedCollections(false)
   }, [updateCredentials])
 
   useEffect(() => {
