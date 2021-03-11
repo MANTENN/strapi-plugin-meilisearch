@@ -49,9 +49,9 @@ $ yarn test
 # Tests the project in watch mode
 $ yarn test:watch
 # Linter
-$ yarn lint
+$ yarn style
 # Linter with fixing
-$ yarn lint:fix
+$ yarn style:fix
 ```
 
 If you already have a running Strapi instance you can run the following to launch the tests:
