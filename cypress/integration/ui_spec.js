@@ -57,9 +57,11 @@ describe('Strapi Login flow', () => {
   it('Add Collections to MeiliSearch', () => {
     const restaurant = '.collections tbody tr:first-child'
     cy.get(`${restaurant} input[type="checkbox"]`).click()
+    cy.wait(500)
     cy.get(`${restaurant}`).contains('processed')
     const category = '.collections tbody tr:nth-child(2)'
     cy.get(`${category} input[type="checkbox"]`).click()
+    cy.wait(500)
     cy.get(`${category}`).contains('processed')
     removeNotifications()
   })

@@ -81,6 +81,7 @@ const Collections = ({ updateCredentials }) => {
         }
       ))
       setCollectionsList(colStatus)
+      setInfoUpdated(true)
     }
   }
 
