@@ -32,7 +32,7 @@ First of all, thank you for contributing to MeiliSearch! The goal of this docume
 We suggest using `yarn` as the lock file is in yarn and thus we ensure a working dev environment.
 
 ```bash
-$ yarn
+$ yarn --dev
 ```
 
 ### Tests and Linter <!-- omit in toc -->
@@ -45,18 +45,31 @@ $ docker pull getmeili/meilisearch:latest # Fetch the latest version of MeiliSea
 $ docker run -p 7700:7700 getmeili/meilisearch:latest ./meilisearch --master-key=masterKey --no-analytics=true
 
 # Tests the project
-$ yarn develop
+$ yarn test
+# Tests the project in watch mode
+$ yarn test:watch
 # Linter
 $ yarn lint
 # Linter with fixing
 $ yarn lint:fix
 ```
 
+If you already have a running Strapi instance you can run the following to launch the tests:
+
+```bash
+yarn cy:open
+```
+
+⚠️ We use `Cypress` to run our tests. `Cypress` expects a **build** of your project. If a not found error is thrown, please build your strapi application `strapi build`, after which you can start it.
+
 ### Playgrounds
 
 To test directly your changes on the plugin in Strapi, you can run the Strapi playground:
 
 ```bash
+# Download dependencies
+$ yarn --cwd ./playground
+# Start Strapi app in watch mode
 $ yarn playground:dev
 ```
 
