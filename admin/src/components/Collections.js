@@ -21,7 +21,7 @@ const headers = [
   }
 ]
 
-const Collections = () => {
+const Collections = ({ updateCredentials }) => {
   const [collectionsList, setCollectionsList] = useState([])
   const [infoUpdated, setInfoUpdated] = useState(false)
 
@@ -81,15 +81,16 @@ const Collections = () => {
         }
       ))
       setCollectionsList(colStatus)
-      setInfoUpdated(true)
     }
   }
 
   useEffect(() => {
-    if (!infoUpdated) {
-      fetchCollections()
-    }
-  }, [infoUpdated])
+    setInfoUpdated(false)
+  }, [updateCredentials])
+
+  useEffect(() => {
+    if (!infoUpdated) fetchCollections()
+  }, [infoUpdated, updateCredentials])
 
   return (
       <div className="col-md-12">
