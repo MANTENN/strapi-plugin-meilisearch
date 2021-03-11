@@ -5,7 +5,6 @@ const {
   [env]: { host, adminUrl }
 } = Cypress.env()
 
-// const { host, adminUrl } = rest[env]
 const wrongHost = 'http://localhost:1234'
 const wrongApiKey = 'wrongApiKey'
 
