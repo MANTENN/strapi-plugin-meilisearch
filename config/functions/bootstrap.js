@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 /**
  * An asynchronous bootstrap function that runs before
@@ -9,91 +9,98 @@
  *
  * See more details here: https://strapi.io/documentation/developer-docs/latest/concepts/configurations.html#bootstrap
  */
+const {
+  fetchCollection,
+  addCollectionRows,
+} = require('../../controllers/meilisearch');
 
 const meilisearch = {
   http: (client) => strapi.plugins.meilisearch.services.http(client),
-  client: (credentials) => strapi.plugins.meilisearch.services.client(credentials),
+  client: (credentials) =>
+    strapi.plugins.meilisearch.services.client(credentials),
   store: () => strapi.plugins.meilisearch.services.store,
-  lifecycles: () => strapi.plugins.meilisearch.services.lifecycles
+  lifecycles: () => strapi.plugins.meilisearch.services.lifecycles,
+};
+
+async function getClient(credentials) {
+  const client = meilisearch.client(credentials);
+  return await meilisearch.http(client);
 }
 
-async function getClient (credentials) {
-  const client = meilisearch.client(credentials)
-  return await meilisearch.http(client)
-}
-
-async function getIndexes (client) {
+async function getIndexes(client) {
   try {
-    return client.getIndexes()
+    return client.getIndexes();
   } catch (e) {
-    return []
+    return [];
   }
 }
 
-async function getCredentials () {
-  const store = await meilisearch.store()
-  const apiKey = await store.getStoreKey('meilisearch_api_key')
-  const host = await store.getStoreKey('meilisearch_host')
-  return { apiKey, host }
+async function getCredentials() {
+  const store = await meilisearch.store();
+  const apiKey = await store.getStoreKey('meilisearch_api_key');
+  const host = await store.getStoreKey('meilisearch_host');
+  return { apiKey, host };
 }
 
-function addHookedCollectionsToStore ({ store, collections }) {
+function addHookedCollectionsToStore({ store, collections }) {
   store.set({
     key: 'meilisearch_hooked',
-    value: collections
-  })
+    value: collections,
+  });
 }
 
-async function getHookedCollectionsFromStore ({ store }) {
-  return store.get({ key: 'meilisearch_hooked' })
+async function getHookedCollectionsFromStore({ store }) {
+  return store.get({ key: 'meilisearch_hooked' });
 }
 
-function addLifecycles ({ client, collections }) {
+function addLifecycles({ client, collections }) {
   // Add lifecyles
-  collections.map(collection => {
-    const model = strapi.models[collection]
-    const meilisearchLifecycles = Object.keys(meilisearch.lifecycles())
-    model.lifecycles = model.lifecycles || {}
+  collections.map((collection) => {
+    const model = strapi.models[collection];
+    const meilisearchLifecycles = Object.keys(meilisearch.lifecycles());
+    model.lifecycles = model.lifecycles || {};
 
-    meilisearchLifecycles.map(lifecycleName => {
-      const fn = model.lifecycles[lifecycleName] || (() => {})
+    meilisearchLifecycles.map((lifecycleName) => {
+      const fn = model.lifecycles[lifecycleName] || (() => {});
       model.lifecycles[lifecycleName] = (data) => {
-        fn(data)
-        meilisearch.lifecycles()[lifecycleName](data, collection, client)
-      }
-    })
-  })
+        fn(data);
+        meilisearch.lifecycles()[lifecycleName](data, collection, client);
+      };
+    });
+  });
 }
 
-async function initHooks (store) {
+async function initHooks(store) {
   try {
-    const credentials = await getCredentials()
-    const getHookedCollections = await getHookedCollectionsFromStore({ store })
+    const credentials = await getCredentials();
+    const getHookedCollections = await getHookedCollectionsFromStore({ store });
     // If hooked collection is not found it means that no MeiliSearch
     // Indexes are to be hooked. Meaning we do not have to add any lifecycle.
     if (credentials.host && getHookedCollections) {
-      const client = await getClient(credentials)
+      const client = await getClient(credentials);
       // get list of indexes in MeiliSearch Instance
-      const indexes = (await getIndexes(client)).map(index => index.uid)
+      const indexes = (await getIndexes(client)).map((index) => index.uid);
 
       // Collections in Strapi
-      const models = strapi.models
+      const models = strapi.models;
 
       // get list of Indexes In MeilISearch that are Collections in Strapi
-      const indexedCollections = Object.keys(models).filter(model => indexes.includes(model))
+      const indexedCollections = Object.keys(models).filter((model) =>
+        indexes.includes(model)
+      );
       addLifecycles({
         collections: indexedCollections,
-        client
-      })
+        client,
+      });
       addHookedCollectionsToStore({
         collections: indexedCollections,
-        store
-      })
+        store,
+      });
     }
 
     // Add collections to hooked store
   } catch (e) {
-    console.error(e)
+    console.error(e);
   }
 }
 
@@ -101,9 +108,42 @@ module.exports = async () => {
   const store = strapi.store({
     environment: strapi.config.environment,
     type: 'plugin',
-    name: 'meilisearch_store'
-  })
-  strapi.plugins.meilisearch.store = store
+    name: 'meilisearch_store',
+  });
+  strapi.plugins.meilisearch.store = store;
 
-  await initHooks(store)
-}
+  await initHooks(store);
+
+  const Queue = require('bee-queue');
+  const queue = new Queue('ingestion', {
+    redis: {
+      host: '127.0.0.1',
+      port: 6379,
+      db: 0,
+      options: {
+        removeOnSuccess: true,
+      },
+    },
+  });
+
+  queue.on('ready', function () {
+    queue.process(function (job, done) {
+      console.log('processing job ' + job.id);
+      console.log('job data page: ', job.data.page);
+      const mockCtx = {
+        params: { collection: job.data.collection },
+        send: (e) => e,
+        request: { body: { data: '' } },
+      };
+      fetchCollection(mockCtx, { page: job.data.page })
+        .then((r) => addCollectionRows(r))
+        .catch((e) => console.log('queue error', e));
+      console.log('processed job ' + job.data.page);
+      setTimeout(function () {
+        done(null, job.data.id);
+      }, 10);
+    });
+
+    console.log('listening for jobs and processing queued jobs...');
+  });
+};

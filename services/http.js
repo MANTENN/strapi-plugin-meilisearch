@@ -57,6 +57,15 @@ async function deleteIndexes () {
   return Promise.all(deletePromise)
 }
 
+async function getUpdates({ indexUid }) {
+  return this.client.index(indexUid).getAllUpdateStatus();
+}
+
+async function getKeys() {
+  return this.client.getKeys();
+}
+
+
 module.exports = (client) => (
   {
     client,
@@ -68,6 +77,8 @@ module.exports = (client) => (
     deleteDocuments,
     getRawIndex,
     deleteAllDocuments,
-    createIndex
+    createIndex,
+    getUpdates,
+    getKeys,
   }
 )

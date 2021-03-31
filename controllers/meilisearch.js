@@ -6,6 +6,17 @@
  * @description: A set of functions called "actions" of the `meilisearch` plugin.
  */
 
+ const Queue = require('bee-queue');
+ const queue = new Queue('ingestion', {
+   redis: {
+     host: '127.0.0.1',
+     port: 6379,
+     db: 0,
+     options: { removeOnSuccess: true },
+   },
+ });
+ 
+
 const meilisearch = {
   http: (client) => strapi.plugins.meilisearch.services.http(client),
   client: (credentials) => strapi.plugins.meilisearch.services.client(credentials),
@@ -80,47 +91,80 @@ async function addCredentials (ctx) {
   return getCredentials()
 }
 
-async function UpdateCollections (ctx) {
-  const { collection: indexUid } = ctx.params
-  const credentials = await getCredentials()
-  const { updateId } = await meilisearch.http(meilisearch.client(credentials)).deleteAllDocuments({
-    indexUid
-  })
+async function UpdateCollections(ctx) {
+  const { collection: indexUid } = ctx.params;
+  const credentials = await getCredentials();
+  const { updateId } = await meilisearch
+    .http(meilisearch.client(credentials))
+    .deleteAllDocuments({
+      indexUid,
+    });
   await meilisearch.http(meilisearch.client(credentials)).waitForPendingUpdate({
-    updateId, indexUid
-  })
-  return addCollection(ctx)
+    updateId,
+    indexUid,
+  });
+  return addCollection(ctx);
 }
 
-async function addCollectionRows (ctx) {
-  const { collection } = ctx.params
-  const { data } = ctx.request.body
-  const credentials = await getCredentials()
+async function addCollectionRows(ctx) {
+  const { collection } = ctx.params;
+  const { data } = ctx.request.body;
+  const credentials = await getCredentials();
   if (data.length > 0) {
     return meilisearch.http(meilisearch.client(credentials)).addDocuments({
       indexUid: collection,
-      data
-    })
+      data,
+    });
   } else {
     return await meilisearch.http(meilisearch.client(credentials)).createIndex({
-      indexUid: collection
-    })
+      indexUid: collection,
+    });
   }
 }
 
-async function fetchCollection (ctx) {
-  const { collection } = ctx.params
+async function fetchCollection(ctx, options = { page: 0 }) {
+  try {
+    const { collection } = ctx.params;
 
-  if (!Object.keys(strapi.services).includes(collection)) {
-    return { error: true, message: 'Collection not found' }
+    if (!Object.keys(strapi.services).includes(collection)) {
+      return { error: true, message: 'Collection not found' };
+    }
+    const perPage = 100;
+    const rows = await strapi.services[collection].find({
+      _publicationState: 'preview',
+      _limit: perPage, // lock limit to keep the behaviour in case strapi updates this
+      _start: options.page * perPage,
+    });
+    ctx.request.body = { data: rows };
+    console.log('procesed', options.page);
+    return ctx;
+  } catch (e) {
+    console.log(`fetchCollection${options ? '(queued):' : ':'}\n`, e);
+    return ctx;
   }
-  const rows = await strapi.services[collection].find({ _publicationState: 'preview' })
-  ctx.request.body = { data: rows }
-  return ctx
 }
 
-async function addCollection (ctx) {
-  return addCollectionRows(await fetchCollection(ctx))
+async function addCollection(ctx) {
+  try {
+    const recordsCount = await strapi.services[ctx.params.collection].count({
+      _publicationState: 'preview',
+    });
+    // default 100 are returned
+    const pages = Math.ceil(recordsCount / 100);
+    // page one because the first 100 are inserted below the loop right away
+    // the others are queued to not take up too much performance
+    for (let page = 1; page < pages; page++) {
+      const job = queue.createJob({ collection: ctx.params.collection, page });
+      job.save();
+      // job.on('succeeded', (result) => {
+      //   console.log(`Received result for job ${job.id}: ${result}`);
+      // });
+    }
+    console.log('pages', pages);
+  } catch (e) {
+    console.log('addCollection:\n', e);
+  }
+  return addCollectionRows(await fetchCollection(ctx));
 }
 
 async function getIndexes () {
@@ -146,6 +190,18 @@ async function getCollections () {
   return { collections }
 }
 
+async function addDocuments(ctx) {
+  const { indexUid } = ctx.params;
+  const { data } = ctx.request.body;
+  const config = await getCredentials();
+
+  return meiliSearchService().addDocuments({
+    config,
+    indexUid,
+    data,
+  });
+}
+
 async function reload (ctx) {
   ctx.send('ok')
   const {
@@ -166,6 +222,22 @@ async function reload (ctx) {
   }
 }
 
+async function getUpdates(ctx) {
+  const config = await getCredentials();
+  const { indexUid } = ctx.params;
+  return meiliSearchService().getUpdates({
+    config,
+    indexUid,
+  });
+}
+
+async function getKeys() {
+  const config = await getCredentials();
+  return meiliSearchService().getKeys({
+    config,
+  });
+}
+
 module.exports = {
   getCredentials: async (ctx) => sendCtx(ctx, getCredentials),
   addCollectionRows: async (ctx) => sendCtx(ctx, addCollectionRows),
@@ -177,5 +249,8 @@ module.exports = {
   deleteAllIndexes: async (ctx) => sendCtx(ctx, deleteAllIndexes),
   deleteIndex: async (ctx) => sendCtx(ctx, deleteIndex),
   UpdateCollections: async (ctx) => sendCtx(ctx, UpdateCollections),
-  reload: async (ctx) => sendCtx(ctx, reload)
+  reload: async (ctx) => sendCtx(ctx, reload),
+  getUpdates: async (ctx) => sendCtx(ctx, getUpdates),
+  getKeys: async (ctx) => sendCtx(ctx, getKeys),
+  fetchCollection
 }
